@@ -40,10 +40,10 @@ def automate_function(
 
     # Extracting only rooms and areas from the elements
     rooms, areas = ModelDataExtractor.extract(version_root_object)
-    if not rooms or not areas:
-        raise ValueError("No rooms or areas found")
 
     # Preparing DataFrames
+    print(rooms)
+    print(dir(rooms))
     room_df = RoomData.create_dataframe(rooms)
     area_df = AreaData.create_dataframe(areas)
 
@@ -71,6 +71,19 @@ def automate_function(
 
     ### END OF HACKY SECTION ------->
 
+    # Summary String
+    base_string = "The automation was run successfully. See details below for KPI results."
+    summary_strings = []
+    for _, row in area_percentages.iterrows():
+        summary_string = (
+            f"{row['level_name']} with a net internal area of {int(round(row['area']))} "
+            f"and a gross area of {int(round(row['area_gross']))} "
+            f"had a KPI of {int(round(row['percentage']*100))}%. "
+        )
+        summary_strings.append(summary_string)
+
+    full_report = base_string + "\n\n" + "\n".join(summary_strings) + "\n"
+
     # We want viewable results, for that we use the Room meshes (a different type)
     Computation.build_relations_to_viewable_rooms(room_df, area_percentages, rooms_to_exclude, threshold)
 
@@ -79,28 +92,29 @@ def automate_function(
     failed_ids = room_df[room_df['result'] == 'failed']['id'].tolist()
     passed_ids = room_df[room_df['result'] == 'passed']['id'].tolist()
 
+    if passed_ids:
+        automate_context.attach_info_to_objects(
+            category="Levels Passed",
+            object_ids=passed_ids,
+            message="Rooms included in the calculation of the net internal area on this level did had a KPI >= threshold value.",
+            visual_overrides={"color":"#00ff00"},
+        )
+    if failed_ids:
+        automate_context.attach_error_to_objects(
+            category="Levels Failed",
+            object_ids=failed_ids,
+            message="Rooms included in the calculation of the net internal area on this level did had a KPI < threshold value.",
+            visual_overrides={"color":"#ff0000"},
+        )
     if skipped_ids:
         automate_context.attach_info_to_objects(
-            category="KPI Calculation Result",
+            category="Areas Skipped",
             object_ids=skipped_ids,
             message="Rooms not included in the calculation of the net internal area. See function inputs.",
             visual_overrides={"color":"#DFDFDF"},
         )
-    if failed_ids:
-        automate_context.attach_error_to_objects(
-            category="KPI Calculation Result",
-            object_ids=failed_ids,
-            message="Rooms included in the calculation of the net internal area on this level did had a KPI < threshold value.",
-            visual_overrides={"color":"#C45959"},
-        )
-    if passed_ids:
-        automate_context.attach_info_to_objects(
-            category="KPI Calculation Result",
-            object_ids=passed_ids,
-            message="Rooms included in the calculation of the net internal area on this level did had a KPI >= threshold value.",
-            visual_overrides={"color":"#34D399"},
-        )
-
+    automate_context.mark_run_success(full_report)
+    automate_context.set_context_view()
 
 if __name__ == "__main__":
 

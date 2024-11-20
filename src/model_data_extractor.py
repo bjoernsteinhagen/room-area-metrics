@@ -8,4 +8,7 @@ class ModelDataExtractor:
         rooms = [element for element in model_data.elements if element.name == "Rooms"]
         areas = [element for element in model_data.elements if element.name == "Areas"]
 
-        return rooms, areas
+        if not rooms or not areas:
+            raise ValueError("No rooms or areas found")
+
+        return rooms[0], areas[0]
