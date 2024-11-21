@@ -76,7 +76,15 @@ def automate_function(
     failed_ids = room_df[room_df['result'] == 'failed']['id'].tolist()
     passed_ids = room_df[room_df['result'] == 'passed']['id'].tolist()
 
-    gradient_values = colorize_static_with_material(passed_ids, room_dict, color_type="success")
+    gradient_values, all_ids = colorize_static_with_material(all_object_ids = {"success": passed_ids, "failed": failed_ids, "skipped": skipped_ids + excluded_room_ids_based_on_levels})
+
+    automate_context.attach_info_to_objects(
+        category="All Results Color Gradient",
+        metadata={"gradient": True, "gradientValues": gradient_values},
+        message="Passed, failed and skipped categories are represented by the color gradient scales below and based on an integer range between 0 and 2. 0 indicates passed, 1 indicates failed, and 2 indicates skipped.",
+        object_ids=all_ids
+    )
+
     if passed_ids:
         automate_context.attach_info_to_objects(
             category="Levels Passed",
@@ -84,7 +92,6 @@ def automate_function(
             message="Rooms included in the calculation of the net internal area on this level did had a KPI >= threshold value.",
         )
 
-    gradient_values = colorize_static_with_material(failed_ids, room_dict, color_type="failed")
     if failed_ids:
         automate_context.attach_error_to_objects(
             category="Levels Failed",
@@ -92,16 +99,15 @@ def automate_function(
             message="Rooms included in the calculation of the net internal area on this level did had a KPI < threshold value.",
         )
 
-    gradient_values = colorize_static_with_material(skipped_ids, room_dict, color_type="skipped")
     if skipped_ids:
-        automate_context.attach_info_to_objects(
+        automate_context.attach_warning_to_objects(
             category="Areas Skipped",
             object_ids=skipped_ids,
             message="Rooms not included in the calculation of the net internal area. See function inputs.",
         )
 
     if excluded_room_ids_based_on_levels:
-        automate_context.attach_info_to_objects(
+        automate_context.attach_warning_to_objects(
             category="Levels Skipped",
             object_ids=excluded_room_ids_based_on_levels,
             message="Levels not included in the calculation (see calculationExport.json) or for this visualization. Rendered rooms do not directly affect the calculation, but are as a result of mapping Area data to Room data.",
