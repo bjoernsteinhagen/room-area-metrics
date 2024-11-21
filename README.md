@@ -1,5 +1,12 @@
 # Speckle Automate: Automated Room and Area KPI Calculation 🏢📊
 
+> ⚠️ **Important Notice: Proof of Concept** ⚠️  
+> 
+> This repository contains **proof-of-concept code** designed specifically for a demo example. While the current implementation demonstrates the core functionality, **it is not production-ready**. Key areas such as **exception handling** and **mismatched floor handling** require improvements for future developments.  
+> 
+> We welcome contributions and ideas from the community! If you're interested in enhancing or building upon this example, feel free to join the discussion on the [Speckle Community Forum](https://speckle.community/).  
+
+
 ## Automate for Area/Room Metrics Check 📐: 
 Exploring how [Speckle Automate](https://www.speckle.systems/product/automate) can plug in to the architectural design process.
 
