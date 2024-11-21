@@ -44,11 +44,22 @@ def automate_function(
     rooms_to_exclude = [room.strip() for room in function_inputs.rooms_to_exclude.split(",")]
     threshold = function_inputs.threshold
 
+    # Validate
+    version_id = automate_context.automation_run_data.triggers[0].payload.version_id
+    commit = automate_context.speckle_client.commit.get(
+        automate_context.automation_run_data.project_id, version_id
+    )
+    if not commit.sourceApplication:
+        raise ValueError("The commit has no sourceApplication, cannot distinguish which model to load.")
+    source_application = commit.sourceApplication
+    if not "Revit" in source_application:
+        automate_context.mark_run_exception(f"sourceApplication of {source_application} is not supported. Needs to be from Revit.")
+
     # Receiving the trigger version
     version_root_object = automate_context.receive_version()
 
-    # Extracting only rooms and areas from the elements
-    rooms, areas = ModelDataExtractor.extract(version_root_object)
+    # Extracting only rooms and areas from the elements with validation
+    rooms, areas = ModelDataExtractor.extract(version_root_object, automate_context)
 
     # Preparing DataFrames
     room_df, room_dict = RoomData.create_dataframe(rooms)
@@ -58,6 +69,9 @@ def automate_function(
     gross_areas_summed = AreaData.get_gross_areas(area_df)
     areas_per_level = AreaData.filter_areas(area_df, rooms_to_exclude)
     areas_summed = AreaData.sum_filtered_areas(areas_per_level)
+
+    if gross_areas_summed.empty:
+        automate_context.mark_run_exception("No areas with the sub-string 'gross' found.")
 
     # Computations
     area_percentages = Computation.percentages(gross_areas_summed, areas_summed)
@@ -81,7 +95,7 @@ def automate_function(
     automate_context.attach_info_to_objects(
         category="All Results Color Gradient",
         metadata={"gradient": True, "gradientValues": gradient_values},
-        message="Passed, failed and skipped categories are represented by the color gradient scales below and based on an integer range between 0 and 2. 0 indicates passed, 1 indicates failed, and 2 indicates skipped.",
+        message="Passed, failed and skipped categories are represented by the color gradient scales below and based on an integer range between 0 and 2. 0 indicates skipped, 1 indicates passed, and 2 indicates failed.",
         object_ids=all_ids
     )
 
@@ -89,14 +103,14 @@ def automate_function(
         automate_context.attach_info_to_objects(
             category="Levels Passed",
             object_ids=passed_ids,
-            message="Rooms included in the calculation of the net internal area on this level did had a KPI >= threshold value.",
+            message="Rooms included in the calculation of the net internal area on this level had a KPI >= threshold value.",
         )
 
     if failed_ids:
         automate_context.attach_error_to_objects(
             category="Levels Failed",
             object_ids=failed_ids,
-            message="Rooms included in the calculation of the net internal area on this level did had a KPI < threshold value.",
+            message="Rooms included in the calculation of the net internal area on this level had a KPI < threshold value.",
         )
 
     if skipped_ids:

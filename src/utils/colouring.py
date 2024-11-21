@@ -6,9 +6,9 @@ def colorize_static_with_material(
     gradient_values: Dict[str, Dict[str, str]] = {}
 
     color_mapping = {
-        "success": 0,
-        "failed": 1,
-        "skipped": 2
+        "success": 1,
+        "failed": 2,
+        "skipped": 0
     }
 
     # Create a flat list of all ids
