@@ -18,17 +18,25 @@ class Computation:
                                           rooms_to_exclude: List[str],
                                           threshold: float) -> None:
 
+        # Mark rooms to be excluded based on their name
         room_df['result'] = room_df['name'].apply(
             lambda x: "skipped" if any(substring in x for substring in rooms_to_exclude) else None
         )
 
         for index, row in room_df.iterrows():
             if room_df.loc[index, 'result'] is None:
+                # Try to get the corresponding percentage for the level
                 level_percentage = area_percentages.loc[
                     area_percentages['level_name'] == row['level_name'],
                     'percentage'
-                ].values[0]
+                ].values
 
-                room_df.loc[index, 'result'] = (
-                    "passed" if level_percentage >= threshold else "failed"
-                )
+                # If no matching percentage is found, handle the exception
+                if len(level_percentage) == 0:
+                    raise KeyError(f"Level name '{row['level_name']}' not found in area_percentages.")
+                else:
+                    # If a match is found, compare with the threshold
+                    level_percentage_value = level_percentage[0]
+                    room_df.loc[index, 'result'] = (
+                        "passed" if level_percentage_value >= threshold else "failed"
+                    )

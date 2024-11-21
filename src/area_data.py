@@ -23,7 +23,7 @@ class AreaData:
         return gross_areas_summed
 
     @staticmethod
-    def get_areas(area_df: pd.DataFrame, rooms_to_exclude: List[str]) -> pd.DataFrame:
+    def filter_areas(area_df: pd.DataFrame, rooms_to_exclude: List[str]) -> pd.DataFrame:
 
         # Areas with names that don't contain the word Gross
         areas_grouped = area_df[~area_df['name'].str.contains('Gross')].groupby(['level_name', 'name'])[
@@ -38,7 +38,11 @@ class AreaData:
         # Area calculation doesn't include "rooms_to_exclude"
         filtered_areas_grouped = areas_grouped[~areas_grouped['name'].str.contains('|'.join(rooms_to_exclude))]
 
-        # Sum remaining entries per level
+        return filtered_areas_grouped
+
+    @staticmethod
+    def sum_filtered_areas(filtered_areas_grouped: pd.DataFrame) -> pd.DataFrame:
+
         areas_per_level = filtered_areas_grouped.groupby('level_name')['area'].sum().reset_index()
 
         return areas_per_level

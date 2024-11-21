@@ -21,7 +21,8 @@ def test_function_run(test_automation_run_data: AutomationRunData, test_automati
         automate_function,
         FunctionInputs(
             threshold=0.8,
-            rooms_to_exclude="Stair, Utility, Elevator, Residential Lobby, Corridor, Storage, Machine RM, Roof Garden",
+            rooms_to_exclude="Stair, Utility, Elevator, Residential Lobby, Corridor, Storage, Machine RM, Roof Garden, Green Roof",
+            levels_to_exclude="L1 - Block 37, L1 - Block 43, Green Roof Hardscape, R2"
         ),
     )
 
